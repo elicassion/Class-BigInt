@@ -263,6 +263,12 @@ class BigInt{
         return mid;
     }
 
+    //ШЁгр
+    BigInt operator % (const BigInt& b) const
+    {
+        BigInt c = *this-(*this/b)*b;
+        return c;
+    }
 
 
 
