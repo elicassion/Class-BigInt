@@ -38,12 +38,13 @@ class BigInt{
     friend ostream& operator << (ostream &out, const BigInt& x)
     {
         int x_size = x.s.size();
-        out << x.s.back();
-        RFOR(i,x_size-2,0)
+        if (x.s.back())
+            out << x.s.back();
+        for (int i=x_size-2;i>=0;--i)
         {
-            char buf[20];
+            char buf[40];
             sprintf(buf, "%08d", x.s[i]);
-            FOR(j,0,strlen(buf)-1) out << buf[j];
+            for (int j=0;j<strlen(buf);++j) out << buf[j];
         }
         return out;
     }
@@ -63,6 +64,12 @@ class BigInt{
 
     //构造函数
     BigInt(long long int num = 0) {*this = num;}
+    BigInt(const BigInt& b)
+    {
+        int b_size=b.s.size();
+        for (int i=0;i<b_size;++i)
+            s.push_back(b.s[i]);
+    }
 
     //赋值运算符
     BigInt operator = (long long num)
@@ -79,7 +86,7 @@ class BigInt{
         s.clear();
         int x;
         int len = (str.length() - 1) / WIDTH + 1;
-        FOR(i,0,len-1)
+        for (int i=0;i<len;++i)
         {
             int end = str.length() - i*WIDTH;
             int start = max(0, end - WIDTH);
@@ -128,6 +135,8 @@ class BigInt{
                 if (x < 0) {x += BASE; g = -1; }
                 c.s.push_back(x);
             }
+            while (!c.s.back())
+                c.s.pop_back();
             return c;
         }
 
@@ -143,6 +152,8 @@ class BigInt{
                 c.s.push_back(x);
             }
             c.s.back() = 0 - c.s.back();
+            while (!c.s.back())
+                c.s.pop_back();
             return c;
         }
 
@@ -204,46 +215,72 @@ class BigInt{
     bool operator != (const BigInt& b) const { return (*this < b) || (*this > b); }
     bool operator == (const BigInt& b) const { return !((*this < b) || (*this > b)); }
 
-    //除数是低精度数除法
-    BigInt divideSmall(int b)
+
+    //除二
+    BigInt div_two() const
     {
-        BigInt tmp, ans;
-        tmp.s.clear();
-        ans.s.clear();
-        int this_size = s.size();
-        long long int r = 0;
-        RFOR(i,this_size-1,0)
+        if (*this<2) return 0;
+        int this_size=s.size();
+        vector<int> tmp;
+        tmp.push_back(0);
+        int res=0;
+        for (int i=this_size-1;i>=0;--i)
         {
-            long long int x = r * BASE + s[i];
-            tmp.s.push_back(x / b);
-            r = x % b;
+            int ttmp=res*BASE+s[i];
+            tmp.push_back(ttmp/2);
+            res=ttmp%2;
+            ++tmp[0];
         }
-        int tmp_size = tmp.s.size();
-        int p = tmp_size - 1;
-        while (tmp.s[p] == 0)
-            p--;
-        if (p < 0) return 0;
-        RFOR(i,p,0)
-            ans.s.push_back(tmp.s[i]);
-        return ans;
+        int non_zero=1;
+        while (!tmp[non_zero])
+            ++non_zero;
+        BigInt c;
+        c.s.clear();
+        for (int i=tmp[0];i>=non_zero;--i)
+            c.s.push_back(tmp[i]);
+        return c;
     }
+
+
+    //高精度除以高精度(二分试商)
+    BigInt operator / (const BigInt& b) const
+    {
+        if (*this < b) return 0;
+        int this_size=s.size();
+        int b_size=b.s.size();
+        BigInt left=1;
+        BigInt right=*this;
+        BigInt tmpsum=left+right;
+        BigInt mid=tmpsum.div_two();
+        while (!(*this >= mid*b && *this < (b+mid*b)))
+        {
+
+            if (mid*b < *this) left=mid;
+            else right=mid;
+            tmpsum=left+right;
+            mid=tmpsum.div_two();
+        }
+        return mid;
+    }
+
+
+
+
 
 };
 int main()
 {
-    BigInt a,b,c,d,e,f,g,h,i,j,k,l,m,n;
+    BigInt a,c,d,e,f,g,h,i,j,k,l,m,n;
     a="12345678901234567890";
-    b="99999999999999999999";
+    //b="99999999999999999999";
     d="11111111111111111111";
     e="22222222222222222222";
-    f=111;
+    f=3000;
     g=222;
     h="9999999999999999";
     i="9999999999999999";
-    int q=9;
-    /*cout<<d-e<<endl;
-    cout<<f-g<<endl;
-    cout<<a-b<<endl;
-    cout<<k<<endl;
-    cout<<h.divideSmall(q)<<endl;/*
+    m="654987321354987987";
+    int q=999;
+    //cout<<f.div_two()<<endl;
+    cout<<a/3<<endl;
 }
