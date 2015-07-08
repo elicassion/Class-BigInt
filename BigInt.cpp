@@ -38,7 +38,7 @@ class BigInt{
     friend ostream& operator << (ostream &out, const BigInt& x)
     {
         int x_size = x.s.size();
-        if (x.s.back() && x_size>1)
+        if (x.s.back() && x_size>=1)
             out << x.s.back();
         else if (!x.s.back() && x_size ==1)
             out << x.s.back();
@@ -58,6 +58,12 @@ class BigInt{
         return in;
     }
 
+    friend BigInt max(const BigInt& x, const BigInt& y)
+    {
+        if (x>y)
+            return x;
+        else return y;
+    }
 
     public:
     static const int BASE = 100000000;
@@ -185,14 +191,14 @@ class BigInt{
         c.s.clear();
         c = 0;
         int this_size = s.size(), b_size = b.s.size();
-        FOR(i,0,b_size-1)
+        for (int i=0;i<b_size;++i)
         {
             BigInt tmp;
             tmp.s.clear();
             if (i != 0)
             {
                 string sufzero = "";
-                FOR(j,1,i)  sufzero += "00000000";
+                for (int j=1;j<=i;++j)  sufzero += "00000000";
                 tmp = sufzero;
             }
             long long int g = 0;
@@ -216,11 +222,13 @@ class BigInt{
         return *this;
     }
 
+
+
     //比较运算符
     bool operator < (const BigInt& b) const
     {
         if (s.size() != b.s.size()) return (s.size() < b.s.size() );
-        RFOR(i,s.size()-1,0) if(s[i] != b.s[i]) return (s[i] < b.s[i]);
+        for (int i=s.size()-1;i>=0;--i) if(s[i] != b.s[i]) return (s[i] < b.s[i]);
         return false;
     }
     bool operator > (const BigInt& b) const { return b < *this; }
@@ -228,6 +236,7 @@ class BigInt{
     bool operator >= (const BigInt& b) const { return !(*this < b); }
     bool operator != (const BigInt& b) const { return (*this < b) || (*this > b); }
     bool operator == (const BigInt& b) const { return !((*this < b) || (*this > b)); }
+    bool operator ! () const { return *this==0; }
 
 
     //除二
@@ -259,22 +268,30 @@ class BigInt{
     //高精度除以高精度(二分试商)
     BigInt operator / (const BigInt& b) const
     {
-        if (*this < b) return 0;
-        int this_size=s.size();
-        int b_size=b.s.size();
+        BigInt tmp_b = b.abs();
+        BigInt tmp_this = this->abs();
+        //cout<<tmp_this<<' '<<tmp_b<<endl;
+        bool MINUS=(b<0)^(*this<0); //0 positive
+        if (tmp_this<tmp_b) return 0;
+        int this_size = tmp_this.s.size();
+        int b_size = tmp_b.s.size();
         BigInt left=1;
-        BigInt right=*this;
+        BigInt right = tmp_this;
         BigInt tmpsum = left+right;
         BigInt mid = tmpsum.div_two();
-        while (!(*this >= mid*b && *this < (b+mid*b)))
+        while (!(tmp_this >= mid*tmp_b && tmp_this < (tmp_b+mid*tmp_b)))
         {
 
-            if (mid*b < *this) left=mid;
+            if (mid*tmp_b < tmp_this) left=mid+1;
             else right=mid;
             tmpsum = left+right;
             mid = tmpsum.div_two();
+            //cout<<mid<<endl;
+            //system("pause");
         }
-        return mid;
+        if (!MINUS)
+            return mid;
+        else return mid.minus();
     }
 
     //取余
@@ -284,7 +301,25 @@ class BigInt{
         return c;
     }
 
+    //void print() const { cout<<*this; }
+    BigInt abs () const
+    {
+        BigInt tmp=*this;
+        if (*this>=0)
+            return tmp;
+        else
+        {
+            tmp.s.back()=-tmp.s.back();
+            return tmp;
+        }
+    }
 
+    BigInt minus () const
+    {
+        BigInt tmp_this = *this;
+        tmp_this.s.back()=-tmp_this.s.back();
+        return tmp_this;
+    }
 
 
 };
@@ -301,8 +336,7 @@ int main()
     i="9999999999999999";
     m="654987321354987987";
     int q=999;
-    //cout<<f.div_two()<<endl;
-    cout<<n<<endl;
-    //cout<<a/3<<endl;
-    //cout<<a%3<<endl;
+    cout<<a%3<<endl;
+    cout<<d/e<<endl;
+    cout<<!f<<endl;
 }
