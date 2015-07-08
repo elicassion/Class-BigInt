@@ -38,7 +38,9 @@ class BigInt{
     friend ostream& operator << (ostream &out, const BigInt& x)
     {
         int x_size = x.s.size();
-        if (x.s.back())
+        if (x.s.back() && x_size>1)
+            out << x.s.back();
+        else if (!x.s.back() && x_size ==1)
             out << x.s.back();
         for (int i=x_size-2;i>=0;--i)
         {
@@ -79,6 +81,10 @@ class BigInt{
             s.push_back(num % BASE);
             num /= BASE;
         }while(num > 0);
+        while (!s.back() && !s.empty())
+                s.pop_back();
+        if (s.empty())
+            s.push_back(0);
         return *this;
     }
     BigInt operator = (const string& str)
@@ -93,6 +99,10 @@ class BigInt{
             sscanf(str.substr(start, end-start).c_str(), "%d", &x);
             s.push_back(x);
         }
+        while (!s.back() && !s.empty())
+                s.pop_back();
+        if (s.empty())
+            s.push_back(0);
         return *this;
     }
 
@@ -137,6 +147,8 @@ class BigInt{
             }
             while (!c.s.back())
                 c.s.pop_back();
+            if (c.s.empty())
+                c.s.push_back(0);
             return c;
         }
 
@@ -154,6 +166,8 @@ class BigInt{
             c.s.back() = 0 - c.s.back();
             while (!c.s.back())
                 c.s.pop_back();
+            if (c.s.empty())
+                c.s.push_back(0);
             return c;
         }
 
@@ -250,15 +264,15 @@ class BigInt{
         int b_size=b.s.size();
         BigInt left=1;
         BigInt right=*this;
-        BigInt tmpsum=left+right;
-        BigInt mid=tmpsum.div_two();
+        BigInt tmpsum = left+right;
+        BigInt mid = tmpsum.div_two();
         while (!(*this >= mid*b && *this < (b+mid*b)))
         {
 
             if (mid*b < *this) left=mid;
             else right=mid;
-            tmpsum=left+right;
-            mid=tmpsum.div_two();
+            tmpsum = left+right;
+            mid = tmpsum.div_two();
         }
         return mid;
     }
@@ -276,17 +290,19 @@ class BigInt{
 };
 int main()
 {
-    BigInt a,c,d,e,f,g,h,i,j,k,l,m,n;
+    BigInt a,c,d,e,f,g,h,i,j,k,l,m,n=0;
     a="12345678901234567890";
     //b="99999999999999999999";
     d="11111111111111111111";
     e="22222222222222222222";
-    f=3000;
+    f=0;
     g=222;
     h="9999999999999999";
     i="9999999999999999";
     m="654987321354987987";
     int q=999;
     //cout<<f.div_two()<<endl;
-    cout<<a/3<<endl;
+    cout<<n<<endl;
+    //cout<<a/3<<endl;
+    //cout<<a%3<<endl;
 }
