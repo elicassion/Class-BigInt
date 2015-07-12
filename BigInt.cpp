@@ -15,367 +15,432 @@
 #include<vector>
 using namespace std;
 class BigInt{
-    //流输入输出运算符
-    friend ostream& operator << (ostream &out, const BigInt& x)
-    {
-        int x_size = x.s.size();
-        if (x.s.back() && x_size>=1)
-            out << x.s.back();
-        else if (!x.s.back() && x_size ==1)
-            out << x.s.back();
-        for (int i=x_size-2;i>=0;--i)
-        {
-            char buf[40];
-            sprintf(buf, "%08d", x.s[i]);
-            for (int j=0;j<strlen(buf);++j) out << buf[j];
-        }
-        return out;
-    }
-    friend istream& operator >> (istream &in, BigInt& x)
-    {
-        string s;
-        if (!(in >> s)) return in;
-        x = s;
-        return in;
+public:
+    string number_; //natrual
+    bool sgn_;//sign 0 pos 1 neg
+    static const int BASE=10;
+
+	BigInt(string s="0"):number_(""),sgn_(0)
+	{
+	    if (s[0]=='-') { sgn_=1; s.erase(0,1); }
+	    s.erase(0,s.find_first_not_of('0'));
+        int len=s.length();
+        if (len==0) { number_="0"; sgn_=0; }
+        else number_=s;
     }
 
-    friend BigInt max(const BigInt& x, const BigInt& y)
+	BigInt(const BigInt &b) { number_=b.number_; sgn_=b.sgn_; }
+	~BigInt() { }
+
+
+    static int abs_cmp(string a,string b)
     {
-        if (x>y)
-            return x;
-        else return y;
+        int a_l=a.length();
+        int b_l=b.length();
+        if(a_l>b_l) return 1;
+        else if(a_l<b_l)  return -1;
+        else return a.compare(b);
     }
-
-    public:
-    static const int BASE = 100000000;
-    static const int WIDTH = 8;
-    vector<int> s;
-
-    //构造函数
-    BigInt(long long int num = 0) { *this = num; }
-    BigInt(const BigInt& b)
+    string add(string a, string b) const
     {
-        s.clear();
-        int b_size=b.s.size();
-        for (int i=0;i<b_size;++i)
-            s.push_back(b.s[i]);
-    }
-    BigInt(const string& str) { *this = str; }
-
-    //赋值运算符
-    BigInt operator = (long long num)
-    {
-        s.clear();
-        do{
-            s.push_back(num % BASE);
-            num /= BASE;
-        }while(num != 0);
-        while (!s.back() && !s.empty())
-            s.pop_back();
-        if (s.empty())
-            s.push_back(0);
-        return *this;
-    }
-    BigInt operator = (const string& str)
-    {
-        s.clear();
-        int x;
-        int len = (str.length() - 1) / WIDTH + 1;
-        for (int i=0;i<len;++i)
+        string res="";
+        int a_l=a.length();
+        int b_l=b.length();
+        if(a_l<b_l)
         {
-            int end = str.length() - i*WIDTH;
-            int start = max(0, end - WIDTH);
-            sscanf(str.substr(start, end-start).c_str(), "%d", &x);
-            s.push_back(x);
+            for(int i=1;i<=b_l-a_l;i++)
+            a="0"+a;
         }
-        while (!s.back() && !s.empty())
-            s.pop_back();
-        if (s.empty())
-            s.push_back(0);
-        return *this;
-    }
-
-    //四则运算运算符
-    BigInt operator + (const BigInt& b) const
-    {
-        BigInt c;
-        c.s.clear();
-        int this_size = s.size(), b_size = b.s.size();
-        if (*this>=0 && b>=0)
-        {
-            for (int i=0, g=0; ; ++i)
-            {
-                if (g == 0 && i >= this_size && i >= b_size) break;
-                int x = g;
-                if (i < this_size) x += s[i];
-                if (i < b_size) x += b.s[i];
-                c.s.push_back(x % BASE);
-                g = x / BASE;
-            }
-            return c;
-        }
-        if (*this<0 && b<0)
-        {
-            BigInt c = this->abs() + b.abs();
-            return c.minus();
-        }
-        if (*this<0 && b>=0)
-        {
-            return (b-this->abs());
-        }
-        if (*this>=0 && b<0)
-        {
-            return (*this-b.abs());
-        }
-
-    }
-    BigInt operator += (const BigInt& b)
-    {
-        //cout<<"FUCK"<<b<<endl;
-        *this=*this+b;
-        return *this;
-    }
-    BigInt operator - (const BigInt& b) const
-    {
-        BigInt c;
-        c.s.clear();
-        int this_size = s.size(), b_size = b.s.size();
-        if (*this == b) {c = 0; return c; }
-        if (*this>=0 && b>=0)
-        {
-            if (*this > b)
-            {
-                //cout<<"ok"<<endl;
-                //cout<<this_size<<' '<<b_size<<endl;
-                for(int i = 0, g = 0; ; ++i)
-                {
-                    if (g == 0 && i >= this_size && i >= b_size) break;
-                    int x = g;
-                    if (i < this_size) x += s[i];
-                    if (i < b_size) x -= b.s[i];
-                    //cout<<x<<endl;
-                    if (x < 0) {x += BASE; g = -1; }
-                    else g=0;
-                    c.s.push_back(x);
-
-                    //system("pause");
-                }
-                while (!c.s.back())
-                    c.s.pop_back();
-                if (c.s.empty())
-                    c.s.push_back(0);
-                return c;
-            }
-
-            else
-            {
-                BigInt d = b-*this;
-                return d.minus();
-            }
-        }
-        if (*this>=0 && b<0)
-        {
-            return *this+b.abs();
-        }
-        if (*this<0 && b>=0)
-        {
-            BigInt d = this->abs() + b;
-            return d.minus();
-        }
-        if (*this<0 && b<0)
-        {
-            return b.abs()-this->abs();
-        }
-
-
-    }
-
-    BigInt operator -= (const BigInt& b)
-    {
-        *this = *this - b;
-        return *this;
-    }
-
-    BigInt operator * (const BigInt& b) const
-    {
-        if (*this==0 || b==0)
-            return 0;
-        BigInt c;
-        c.s.clear();
-        c = 0;
-        int this_size = s.size(), b_size = b.s.size();
-        bool MINUS=(b<0)^(*this<0);
-        BigInt p_b = b.abs();
-        BigInt p_this = this->abs();
-        for (int i=0;i<b_size;++i)
-        {
-            BigInt tmp;
-            tmp.s.clear();
-            BigInt sufzero=1;
-            if (i != 0)
-            {
-                for (int j=1;j<=i;++j)
-                    tmp.s.push_back(0);
-            }
-            long long int g = 0;
-            for (int j = 0; ; ++j)
-            {
-                if (g == 0 && j >= this_size ) break;
-                long long int x = g;
-                if (j < this_size) x += (long long int)p_this.s[j] * p_b.s[i];
-                tmp.s.push_back(x % BASE);
-                g = x / BASE;
-            }
-            //cout<<tmp<<endl;
-            c+=tmp;
-            //cout<<c<<endl;
-        }
-        //cout<<c<<endl;
-        if (!MINUS)
-            return c;
-        else return c.minus();
-    }
-
-    BigInt operator *= (const BigInt& b)
-    {
-        *this = *this * b;
-        return *this;
-    }
-
-
-
-    //比较运算符
-    bool operator < (const BigInt& b) const
-    {
-        if (this->s.back()>=0 && b.s.back()>=0)
-        {
-            if (s.size() != b.s.size()) return (s.size() < b.s.size() );
-            for (int i=s.size()-1;i>=0;--i) if(s[i] != b.s[i]) return (s[i] < b.s[i]);
-            return false;
-        }
-        else if (this->s.back()<0 && b.s.back()>=0)
-            return true;
-        else if (this->s.back()>=0 && b.s.back()<0)
-            return false;
-        else if (this->s.back()<0 && b.s.back()<0)
-        {
-            if (s.size() != b.s.size()) return (s.size() > b.s.size() );
-            if (s.back() < b.s.back()) return true;
-            for (int i=s.size()-2;i>=0;--i) if(s[i] != b.s[i]) return (s[i] > b.s[i]);
-            return false;
-        }
-
-    }
-    bool operator > (const BigInt& b) const { return b < *this; }
-    bool operator <= (const BigInt& b) const { return !(b < *this); }
-    bool operator >= (const BigInt& b) const { return !(*this < b); }
-    bool operator != (const BigInt& b) const { return (*this < b) || (*this > b); }
-    bool operator == (const BigInt& b) const { return !((*this < b) || (*this > b)); }
-    bool operator ! () const { return *this==0; }
-
-
-    //除二
-    BigInt div_two() const
-    {
-        if (*this<2) return 0;
-        int this_size=s.size();
-        vector<int> tmp;
-        tmp.push_back(0);
-        int res=0;
-        for (int i=this_size-1;i>=0;--i)
-        {
-            int ttmp=res*BASE+s[i];
-            tmp.push_back(ttmp/2);
-            res=ttmp%2;
-            ++tmp[0];
-        }
-        int non_zero=1;
-        while (!tmp[non_zero])
-            ++non_zero;
-        BigInt c;
-        c.s.clear();
-        for (int i=tmp[0];i>=non_zero;--i)
-            c.s.push_back(tmp[i]);
-        return c;
-    }
-
-
-    //高精度除以高精度(二分试商)
-    BigInt operator / (const BigInt& b) const
-    {
-        assert(b!=0 && "divide 0");
-        BigInt tmp_b = b.abs();
-        BigInt tmp_this = this->abs();
-        //cout<<tmp_this<<' '<<tmp_b<<endl;
-        bool MINUS=(b<0)^(*this<0); //0 positive
-        if (tmp_this<tmp_b) return 0;
-        int this_size = tmp_this.s.size();
-        int b_size = tmp_b.s.size();
-        BigInt left=1;
-        BigInt right = tmp_this;
-        BigInt tmpsum = left+right;
-        BigInt mid = tmpsum.div_two();
-        //cout<<mid<<' '<<mid*tmp_b<<endl;
-        while ( !(tmp_this >= mid*tmp_b && tmp_this < (tmp_b+mid*tmp_b)) )
-        {
-            if (mid*tmp_b < tmp_this) left=mid+1;
-            else right=mid;
-            tmpsum = left+right;
-            mid = tmpsum.div_two();
-            //cout<<mid<<endl;
-            //system("pause");
-        }
-        if (!MINUS)
-            return mid;
-        else return mid.minus();
-    }
-
-    //取余
-    BigInt operator % (const BigInt& b) const
-    {
-        BigInt c = *this-(*this/b)*b;
-        return c;
-    }
-
-
-    /*operator double () const
-    {
-        bool MINUS = (b<0);
-        BigInt a_b = this->abs();
-        int a_b_size = a_b.s.size();
-        double d_num = 0;
-        for (int i=a_b_size-1; i>=0; --i)
-        {
-            d_num += a_b.s[i];
-            if (i!=0)
-                d_num *= BASE;
-        }
-        if (!MINUS) return d_num;
-        else return -d_num;
-    }*/
-
-    BigInt abs () const
-    {
-        //cout<<"FUCK"<<endl;
-        BigInt tmp=*this;
-        if (*this>=0)
-            return tmp;
         else
         {
-            tmp.s.back()=-tmp.s.back();
-            //cout<<tmp<<endl;
-            return tmp;
+            for(int i=1;i<=a_l-b_l;i++)
+            b="0"+b;
         }
+        a_l=a.length();
+        int g=0;
+        int x;
+        for(int i=a_l-1;i>=0;i--)
+        {
+            x=a[i]-'0'+b[i]-'0'+g;
+            g=x/10;
+            res=char(x%10+'0')+res;
+        }
+        if(g!=0)
+            res=char(g+'0')+res;
+        return res;
     }
 
-    BigInt minus () const
+    string sub(string a, string b) const
     {
-        BigInt tmp_this = *this;
-        tmp_this.s.back()=-tmp_this.s.back();
-        return tmp_this;
+        string res;
+        int del_l=a.length()-b.length();
+        int g=0;
+        for(int i=b.length()-1;i>=0;i--)
+        {
+            if(a[del_l+i]<b[i]+g)
+            {
+                res=char(a[del_l+i]-b[i]-g+'0'+10)+res;
+                g=1;
+            }
+            else
+            {
+                res=char(a[del_l+i]-b[i]-g+'0')+res;
+                g=0;
+            }
+        }
+        for(int i=del_l-1;i>=0;i--)
+        {
+            if(a[i]-g>='0')
+            {
+                res=char(a[i]-g)+res;
+                g=0;
+            }
+            else
+            {
+                res=char(a[i]-g+10)+res;
+                g=1;
+            }
+        }
+        res.erase(0,res.find_first_not_of('0'));
+        return res;
     }
 
 
+    string mul(string a,string b) const
+    {
+        string res;
+        int a_l=a.length();
+        int b_l=b.length();
+        string temp_res;
+        for(int i=b_l-1;i>=0;i--)
+        {
+            temp_res="";
+            int x=b[i]-'0';
+            int t=0;
+            int g=0;
+            if(x!=0)
+            {
+                for(int j=1;j<=b_l-1-i;j++)
+                temp_res+="0";
+                for(int j=a_l-1;j>=0;j--)
+                {
+                    t=(x*(a[j]-'0')+g)%10;
+                    g=(x*(a[j]-'0')+g)/10;
+                    temp_res=char(t+'0')+temp_res;
+                }
+                if(g!=0) temp_res=char(g+'0')+temp_res;
+            }
+            res=add(res,temp_res);
+        }
+        res.erase(0,res.find_first_not_of('0'));
+        return res;
+    }
+
+    void div(string a,string b,string &quotient,string &residue) const
+    {
+        quotient=residue="";
+        if(b=="0")
+        {
+            quotient=residue="ERROR";
+            return;
+        }
+        if(a=="0")
+        {
+            quotient=residue="0";
+            return;
+        }
+        int res=abs_cmp(a,b);
+        if(res<0)
+        {
+            quotient="0";
+            residue=a;
+            return;
+        }
+        else if(res==0)
+        {
+            quotient="1";
+            residue="0";
+            return;
+        }
+        else
+        {
+            int a_l=a.length();
+            int b_l=b.length();
+            string tempstr;
+            tempstr.append(a,0,b_l-1);
+            for(int i=b_l-1;i<a_l;i++)
+            {
+                tempstr=tempstr+a[i];
+                tempstr.erase(0,tempstr.find_first_not_of('0'));
+                if(tempstr.empty())
+                    tempstr="0";
+                for(char ch='9';ch>='0';ch--)
+                {
+                    string str,tmp;
+                    str=str+ch;
+                    tmp=mul(b,str);
+                    if(abs_cmp(tmp,tempstr)<=0)
+                    {
+                        quotient=quotient+ch;
+                        tempstr=sub(tempstr,tmp);
+                        break;
+                    }
+                }
+            }
+            residue=tempstr;
+        }
+        quotient.erase(0,quotient.find_first_not_of('0'));
+        if(quotient.empty()) quotient="0";
+    }
+
+
+	operator bool() { return !(number_=="0"); }
+
+	operator double()
+	{
+	    double res=0;
+	    int num_len = number_.length();
+	    for (int i=0; i<num_len; ++i)
+            res = res*BASE + (number_[i] - '0');
+        if (sgn_) res=0.0-res;
+        return res;
+	}
+
+	bool operator!=(const BigInt &b) const { return !((number_==b.number_) && (sgn_==b.sgn_)); }
+	bool operator==(const BigInt &b) const { return !(*this!=b); }
+	bool operator<(const BigInt &b) const
+	{
+	    if (sgn_ != b.sgn_) return !(sgn_ < b.sgn_);
+	    else
+        {
+            if (!sgn_)
+            {
+                int a_l=number_.length();
+                int b_l=b.number_.length();
+                if (a_l!=b_l) return (a_l<b_l);
+                else
+                {
+                    for (int i=0; i<a_l; ++i)
+                    {
+                        if (number_[i]!=b.number_[i]) return number_[i]<b.number_[i];
+                    }
+                    return false;
+                }
+            }
+            else
+            {
+                int a_l=number_.length();
+                int b_l=b.number_.length();
+                if (a_l!=b_l) return !(a_l<b_l);
+                else
+                {
+                    for (int i=0; i<a_l; ++i)
+                    {
+                        if (number_[i]!=b.number_[i]) return !(number_[i]<b.number_[i]);
+                    }
+                    return false;
+                }
+            }
+        }
+	}
+
+	BigInt &operator=(const BigInt &b)
+	{
+	    sgn_=b.sgn_;
+	    number_=b.number_;
+	    return *this;
+	}
+
+	BigInt operator+(const BigInt &obj) const
+	{
+	    if(number_=="0" && obj.number_=="0") { return BigInt("0"); }
+	    BigInt res;
+	    string a="",b="";
+        a=number_;
+        b=obj.number_;
+        if(sgn_ && obj.sgn_)
+        {
+            res.number_=add(a,b);
+            res.sgn_=1;
+        }
+        else if(!sgn_ && !obj.sgn_)
+        {
+            res.number_=add(a,b);
+            res.sgn_=0;
+        }
+        else if(sgn_ && !obj.sgn_)
+        {
+            if(abs_cmp(a,b)==1)
+            {
+                res.number_=sub(a,b);
+                res.sgn_=1;
+            }
+            else if(abs_cmp(a,b)==0)
+            {
+                res.number_="0";
+                res.sgn_=0;
+            }
+            else if(abs_cmp(a,b)==-1)
+            {
+                res.number_=sub(b,a);
+            }
+        }
+        else if(!sgn_ && obj.sgn_)
+        {
+            if(abs_cmp(a,b)==1)
+            {
+                res.number_=sub(a,b);
+            }
+            else if(abs_cmp(a,b)==0)
+            {
+                res.number_="0";
+                res.sgn_=0;
+            }
+            else if(abs_cmp(a,b)==-1)
+            {
+                res.number_=sub(b,a);
+                res.sgn_=1;
+            }
+        }
+        return res;
+	}
+
+
+	BigInt operator-(const BigInt &obj) const
+	{
+	    if(number_=="0" && obj.number_=="0") { return BigInt("0"); }
+	    string a="",b="";
+	    BigInt res;
+        a=number_;
+        b=obj.number_;
+        if(!sgn_ && !obj.sgn_)
+        {
+            if(abs_cmp(a,b)==1)
+            {
+                res.number_=sub(a,b);
+            }
+            if(abs_cmp(a,b)==0)
+            {
+                res.number_="0";
+                res.sgn_=0;
+            }
+            if(abs_cmp(a,b)==-1)
+            {
+                res.number_=sub(b,a);
+                res.sgn_=1;
+            }
+        }
+        else if(sgn_ && obj.sgn_)
+        {
+            if(abs_cmp(a,b)==1)
+            {
+                res.number_=sub(a,b);
+                res.sgn_=1;
+            }
+            if(abs_cmp(a,b)==0)
+            {
+                res.number_="0";
+                res.sgn_=0;
+            }
+            if(abs_cmp(a,b)==-1)
+            {
+                res.number_=sub(b,a);
+            }
+
+        }
+        else if(!sgn_ && obj.sgn_)
+        {
+            res.number_=add(a,b);
+        }
+        else if(sgn_ && !obj.sgn_)
+        {
+            res.number_=add(a,b);
+            res.sgn_=1;
+        }
+        return res;
+	}
+
+	BigInt operator*(const BigInt &obj) const
+	{
+	    if(number_=="0" || obj.number_=="0") { return BigInt("0"); }
+	    string a="",b="";
+	    BigInt res;
+        a=number_;
+        b=obj.number_;
+        if( !((sgn_)^(obj.sgn_)) ) { res.number_=mul(a,b); }
+        else if( (sgn_)^(obj.sgn_) ) { res.number_=mul(a,b); res.sgn_=1; }
+        return res;
+	}
+
+	BigInt operator/(const BigInt &obj) const
+	{
+        assert(obj.number_!="0" && "divided by zero");
+        if(number_=="0") { return BigInt("0"); }
+        string a="",b="",resi="";
+        BigInt res;
+        a=number_;
+        b=obj.number_;
+        if( !((sgn_)^(obj.sgn_)) ) { div(a,b,res.number_,resi); }
+        else if( (sgn_)^(obj.sgn_) ) { div(a,b,res.number_,resi); res.sgn_=1; }
+        if (res.number_=="0" || res.number_=="") { res.number_="0"; res.sgn_=0; }
+        return res;
+    }
+
+	BigInt operator%(const BigInt &obj) const
+	{
+	    assert(obj.number_!="0" && "divided by zero");
+        if(number_=="0") { return BigInt("0"); }
+        string a="",b="",quo="";
+        BigInt res;
+        a=number_;
+        b=obj.number_;
+        if( !((sgn_)^(obj.sgn_)) ) { div(a,b,quo,res.number_); }
+        else if( (sgn_)^(obj.sgn_) ) { div(a,b,quo,res.number_); res.sgn_=1; }
+        if (res.number_=="0" || res.number_=="") { res.number_="0"; res.sgn_=0; }
+        return res;
+	}
+
+	friend BigInt max(const BigInt &a, const BigInt &b)
+	{
+        BigInt res;
+        if (!a.sgn_ && !b.sgn_) res = (abs_cmp(a.number_,b.number_)==1)?a:b;
+        else if (!a.sgn_ && b.sgn_) res = a;
+        else if (a.sgn_ && !b.sgn_) res = b;
+        else if (a.sgn_ && b.sgn_) res = (abs_cmp(a.number_,b.number_)==-1)?a:b;
+        return res;
+	}
+
+	friend BigInt min(const BigInt &a, const BigInt &b)
+	{
+	    BigInt res;
+        if (!a.sgn_ && !b.sgn_) res = (abs_cmp(a.number_,b.number_)==-1)?a:b;
+        else if (!a.sgn_ && b.sgn_) res = b;
+        else if (a.sgn_ && !b.sgn_) res = a;
+        else if (a.sgn_ && b.sgn_) res = (abs_cmp(a.number_,b.number_)==1)?a:b;
+        return res;
+	}
+
+	void print() const
+	{
+	    if (sgn_) cout<<'-';
+	    cout<<number_;
+	}
+
+    BigInt minus()
+    {
+        BigInt tmp=*this;
+        if (tmp.number_!="0")
+            tmp.sgn_=!tmp.sgn_;
+        else tmp.sgn_=0;
+        return tmp;
+    }
+
+    BigInt abs()
+    {
+        BigInt tmp=*this;
+        tmp.sgn_=0;
+        return tmp;
+    }
 };
 
 
